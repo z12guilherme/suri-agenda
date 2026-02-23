@@ -27,12 +27,15 @@ app.post('/webhook/agenda', async (req, res) => {
     const messageText = req.body.message && req.body.message.text ? req.body.message.text : "";
     // Captura um campo extra 'action' para chamadas diretas do fluxo
     const action = req.body.action;
+    // Verifica se existe a tag 'pedir_agenda' no contato (caso use a estratégia de Tag)
+    const tags = req.body.contact && req.body.contact.tags ? req.body.contact.tags : [];
+    const hasTag = Array.isArray(tags) && tags.some(t => (typeof t === 'string' ? t : t.name).includes('pedir_agenda'));
 
     if (!userId) return res.status(400).send("userId não encontrado no webhook");
 
-    // Filtro: Aceita se tiver a palavra "agenda" OU se vier com action="agenda" (do fluxo)
-    if ((!messageText || !messageText.toLowerCase().includes("agenda")) && action !== "agenda") {
-        return res.send("Ignorado: mensagem não contém a palavra chave 'agenda' e não é ação direta.");
+    // Filtro: Aceita se: 1. Texto tem "agenda" | 2. Action é "agenda" | 3. Tem a tag "pedir_agenda"
+    if ((!messageText || !messageText.toLowerCase().includes("agenda")) && action !== "agenda" && !hasTag) {
+        return res.send("Ignorado: mensagem não contém a palavra chave, action ou tag necessária.");
     }
 
     try {
