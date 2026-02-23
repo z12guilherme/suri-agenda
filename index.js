@@ -134,5 +134,11 @@ app.post('/webhook/agenda', async (req, res) => {
     }
 });
 
+// Captura qualquer rota que não exista (404) e avisa no log
+app.use((req, res) => {
+    console.log(`⚠️ Rota desconhecida acessada: [${req.method}] ${req.path}`);
+    res.status(404).send(`Erro 404: A rota '${req.path}' não existe neste servidor.`);
+});
+
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`Servidor rodando na porta ${port}`));
