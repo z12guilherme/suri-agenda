@@ -32,10 +32,15 @@ app.post('/webhook/agenda', async (req, res) => {
     const hasTag = Array.isArray(tags) && tags.some(t => (typeof t === 'string' ? t : t.name).includes('pedir_agenda'));
 
     if (!userId) return res.status(400).send("userId não encontrado no webhook");
+    
+    const isAgendaKeyword = messageText && messageText.toLowerCase().includes("agenda");
+    const isAction = action === "agenda";
+    // Só considera a tag se NÃO houver texto de mensagem (geralmente eventos de sistema como change-queue não trazem o texto da msg)
+    const isTagEvent = hasTag && !messageText; 
 
-    // Filtro: Aceita se: 1. Texto tem "agenda" | 2. Action é "agenda" | 3. Tem a tag "pedir_agenda"
-    if ((!messageText || !messageText.toLowerCase().includes("agenda")) && action !== "agenda" && !hasTag) {
-        return res.send("Ignorado: mensagem não contém a palavra chave, action ou tag necessária.");
+    // Filtro: Aceita se: 1. Texto tem "agenda" | 2. Action é "agenda" | 3. É um evento de Tag (sem mensagem de texto junto)
+    if (!isAgendaKeyword && !isAction && !isTagEvent) {
+        return res.send("Ignorado: não atendeu aos critérios de disparo (palavra-chave, action ou tag sem mensagem).");
     }
 
     try {
