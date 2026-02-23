@@ -82,8 +82,7 @@ app.post('/webhook/agenda', async (req, res) => {
                     body: JSON.stringify({
                         userId,
                         message: {
-                            templateId: "",
-                            BodyParameters: [mensagemFinal]
+                            text: mensagemFinal
                         }
                     })
                 });
