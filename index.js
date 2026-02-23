@@ -25,9 +25,6 @@ app.get('/webhook/agenda', (req, res) => {
 });
 
 app.post('/webhook/agenda', async (req, res) => {
-    // Log para ver o que a SURI está mandando (útil para debug no Render)
-    console.log("📩 Webhook recebido:", JSON.stringify(req.body, null, 2));
-
     const body = req.body;
 
     // 1. Tenta pegar dados do formato Customizado (Integração do Fluxo)
@@ -49,13 +46,8 @@ app.post('/webhook/agenda', async (req, res) => {
 
     // CORREÇÃO: Remove o prefixo do canal se o ID vier composto (ex: "wp...:5581...")
     if (userId && typeof userId === 'string' && userId.includes(':')) {
-        const originalId = userId;
         userId = userId.split(':')[1];
-        console.log(`🔧 ID ajustado de '${originalId}' para '${userId}'`);
     }
-
-    // DEBUG: Mostra o que foi extraído para entender por que pode estar falhando
-    console.log(`🔍 Debug Extração: Nome='${userName}', userId='${userId}', msg='${messageText}', action='${action}'`);
 
     const hasTag = Array.isArray(tags) && tags.some(t => (typeof t === 'string' ? t : t.name).includes('pedir_agenda'));
 
@@ -67,15 +59,10 @@ app.post('/webhook/agenda', async (req, res) => {
     // Só considera a tag se NÃO houver texto de mensagem (geralmente eventos de sistema como change-queue não trazem o texto da msg)
     const isTagEvent = hasTag && !messageText; 
 
-    console.log(`🛡️ Debug Filtros: keyword=${isAgendaKeyword}, action=${isAction}, tagEvent=${isTagEvent}`);
-
     // Filtro: Aceita se: 1. Texto tem "agenda" | 2. Action é "agenda" | 3. É um evento de Tag (sem mensagem de texto junto)
     if (!isAgendaKeyword && !isAction && !isTagEvent) {
-        console.log("🚫 Ignorado pelos filtros.");
         return res.send("Ignorado: não atendeu aos critérios de disparo (palavra-chave, action ou tag sem mensagem).");
     }
-
-    console.log(`🚀 Processando agenda para o ID: ${userId}`);
 
     try {
         console.log("📥 Baixando planilha do Google Sheets...");
