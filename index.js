@@ -35,11 +35,13 @@ app.post('/webhook/agenda', async (req, res) => {
     let action = body.action;
     let messageText = body.message && body.message.text ? body.message.text : "";
     let tags = body.contact && body.contact.tags ? body.contact.tags : [];
+    let userName = body.contact && body.contact.name ? body.contact.name : "Desconhecido";
 
     // 2. Se não achou, tenta pegar do formato Webhook Global (SURI padrão - payload)
     if (!userId && body.payload && body.payload.user) {
         userId = body.payload.user.Id;
         tags = body.payload.user.Tags || [];
+        userName = body.payload.user.Name || "Desconhecido";
     }
     if (!messageText && body.payload && body.payload.Message) {
         messageText = body.payload.Message.text;
@@ -53,7 +55,7 @@ app.post('/webhook/agenda', async (req, res) => {
     }
 
     // DEBUG: Mostra o que foi extraído para entender por que pode estar falhando
-    console.log(`🔍 Debug Extração: userId='${userId}', msg='${messageText}', action='${action}'`);
+    console.log(`🔍 Debug Extração: Nome='${userName}', userId='${userId}', msg='${messageText}', action='${action}'`);
 
     const hasTag = Array.isArray(tags) && tags.some(t => (typeof t === 'string' ? t : t.name).includes('pedir_agenda'));
 
