@@ -42,38 +42,48 @@ app.post('/webhook/agenda', async (req, res) => {
         response.body.pipe(csv())
         .on('data', row => rows.push(row))
         .on('end', async () => {
-            // Monta uma única mensagem com todos os horários
-            let mensagemFinal = "📅 *Agenda de Hoje*\n\n";
-            
-            if (rows.length === 0) {
-                mensagemFinal += "🚫 Não há vagas disponíveis no momento.";
-            } else {
-                for (const row of rows) {
-                    const { DIA, HORARIO, MEDICO, VAGAS } = row;
-                    if (HORARIO) { // Só adiciona se a linha tiver horário preenchido
-                        mensagemFinal += `📅 ${DIA} às ${HORARIO} - Dr(a). ${MEDICO || 'Plantão'} (${VAGAS || 0} vagas)\n`;
+            try {
+                // Monta uma única mensagem com todos os horários
+                let mensagemFinal = "📅 *Agenda de Hoje*\n\n";
+                
+                if (rows.length === 0) {
+                    mensagemFinal += "🚫 Não há vagas disponíveis no momento.";
+                } else {
+                    for (const row of rows) {
+                        const { DIA, HORARIO, MEDICO, VAGAS } = row;
+                        if (HORARIO) { // Só adiciona se a linha tiver horário preenchido
+                            mensagemFinal += `📅 ${DIA} às ${HORARIO} - Dr(a). ${MEDICO || 'Plantão'} (${VAGAS || 0} vagas)\n`;
+                        }
                     }
                 }
+
+                // Envia apenas uma mensagem consolidada
+                const suriResponse = await fetch(SURI_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${SURI_TOKEN}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        userId,
+                        message: {
+                            templateId: "",
+                            BodyParameters: [mensagemFinal]
+                        }
+                    })
+                });
+
+                if (!suriResponse.ok) {
+                    console.error("Erro SURI:", await suriResponse.text());
+                }
+
+                res.json({ success: true, message: "Agenda processada" });
+            } catch (innerError) {
+                console.error("Erro no processamento interno:", innerError);
+                // Não enviamos res.status(500) aqui pois o res pode já ter sido enviado se houver timeout, 
+                // mas garante que o erro apareça no log do Render.
             }
-
-            // Envia apenas uma mensagem consolidada
-            await fetch(SURI_ENDPOINT, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${SURI_TOKEN}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    userId,
-                    message: {
-                        templateId: "",
-                        BodyParameters: [mensagemFinal]
-                    }
-                })
-            });
-
-            res.send("Agenda enviada com sucesso!");
         });
 
     } catch (error) {
