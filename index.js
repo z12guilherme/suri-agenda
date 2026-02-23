@@ -45,6 +45,13 @@ app.post('/webhook/agenda', async (req, res) => {
         messageText = body.payload.Message.text;
     }
 
+    // CORREÇÃO: Remove o prefixo do canal se o ID vier composto (ex: "wp...:5581...")
+    if (userId && typeof userId === 'string' && userId.includes(':')) {
+        const originalId = userId;
+        userId = userId.split(':')[1];
+        console.log(`🔧 ID ajustado de '${originalId}' para '${userId}'`);
+    }
+
     // DEBUG: Mostra o que foi extraído para entender por que pode estar falhando
     console.log(`🔍 Debug Extração: userId='${userId}', msg='${messageText}', action='${action}'`);
 
