@@ -1,7 +1,6 @@
 import express from 'express';
 import fetch from 'node-fetch';
 import csv from 'csv-parser';
-import { Writable } from 'stream';
 
 const app = express();
 app.use(express.json());
@@ -14,21 +13,24 @@ app.get('/', (req, res) => {
     res.send("Servidor Suri-Agenda está online! 🚀");
 });
 
+// Adiciona uma resposta para quem tentar acessar via navegador (GET)
+app.get('/webhook/agenda', (req, res) => {
+    res.status(405).send("⚠️ Este endpoint é um Webhook e espera um método POST. Use o Postman ou a SURI para testar.");
+});
+
 app.post('/webhook/agenda', async (req, res) => {
     const userId = req.body.userId;
     if (!userId) return res.status(400).send("userId não encontrado no webhook");
 
     try {
         const response = await fetch(SHEET_URL);
-        const csvData = await response.text();
+        if (!response.ok) throw new Error(`Erro ao baixar planilha: ${response.statusText}`);
 
         const rows = [];
-        const parser = csv();
-        parser.on('data', row => rows.push(row));
-        parser.write(csvData);
-        parser.end();
-
-        parser.on('end', async () => {
+        
+        response.body.pipe(csv())
+        .on('data', row => rows.push(row))
+        .on('end', async () => {
             for (const row of rows) {
                 const { DIA, HORARIO, MEDICO, VAGAS } = row;
                 const mensagem = `📅 Agenda de Hoje - ${DIA}\n${HORARIO} - Dr. ${MEDICO}\nVagas: ${VAGAS}`;
