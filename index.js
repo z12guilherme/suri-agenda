@@ -45,9 +45,15 @@ app.post('/webhook/agenda', async (req, res) => {
             // Monta uma única mensagem com todos os horários
             let mensagemFinal = "📅 *Agenda de Hoje*\n\n";
             
-            for (const row of rows) {
-                const { DIA, HORARIO, MEDICO, VAGAS } = row;
-                mensagemFinal += `🕒 ${HORARIO} - Dr(a). ${MEDICO} (${VAGAS} vagas)\n`;
+            if (rows.length === 0) {
+                mensagemFinal += "🚫 Não há vagas disponíveis no momento.";
+            } else {
+                for (const row of rows) {
+                    const { HORARIO, MEDICO, VAGAS } = row;
+                    if (HORARIO) { // Só adiciona se a linha tiver horário preenchido
+                        mensagemFinal += `🕒 ${HORARIO} - Dr(a). ${MEDICO || 'Plantão'} (${VAGAS || 0} vagas)\n`;
+                    }
+                }
             }
 
             // Envia apenas uma mensagem consolidada
