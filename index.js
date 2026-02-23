@@ -47,6 +47,13 @@ app.post('/webhook/agenda', async (req, res) => {
         messageText = body.payload.Message.text;
     }
 
+    // CORREÇÃO: Remove o prefixo do canal se o ID vier composto (ex: "wp...:5581...")
+    if (userId && typeof userId === 'string' && userId.includes(':')) {
+        const originalId = userId;
+        userId = userId.split(':')[1];
+        console.log(`🔧 ID ajustado de '${originalId}' para '${userId}'`);
+    }
+
     // DEBUG: Mostra o que foi extraído para entender por que pode estar falhando
     console.log(`🔍 Debug Extração: Nome='${userName}', userId='${userId}', msg='${messageText}', action='${action}'`);
 
@@ -85,7 +92,7 @@ app.post('/webhook/agenda', async (req, res) => {
             console.log(`📊 Leitura concluída. ${rows.length} linhas encontradas.`);
             try {
                 // Monta uma única mensagem com todos os horários
-                let mensagemFinal = "📅 *Agenda de Hoje*\n\n";
+                let mensagemFinal = "️ *Agenda Semanal*\n\n";
                 
                 // Filtra apenas horários com vagas positivas
                 const horariosDisponiveis = rows.filter(row => row.HORARIO && parseInt(row.VAGAS, 10) > 0);
@@ -97,7 +104,7 @@ app.post('/webhook/agenda', async (req, res) => {
                         const { DIA, HORARIO, MEDICO, VAGAS } = row;
                         // Capitaliza o nome (ex: pedro -> Pedro)
                         const medicoFormatado = MEDICO ? MEDICO.charAt(0).toUpperCase() + MEDICO.slice(1) : 'Plantão';
-                        mensagemFinal += `📅 ${DIA} às ${HORARIO} - Dr(a). ${medicoFormatado} (${VAGAS} vagas)\n`;
+                        mensagemFinal += `🗓️ ${DIA} às ${HORARIO} - Dr(a). ${medicoFormatado} (${VAGAS} vagas)\n`;
                     }
                 }
 
