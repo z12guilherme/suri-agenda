@@ -68,6 +68,8 @@ app.post('/webhook/agenda', async (req, res) => {
         return res.send("Ignorado: não atendeu aos critérios de disparo (palavra-chave, action ou tag sem mensagem).");
     }
 
+    console.log(`🚀 Processando agenda para o ID: ${userId}`);
+
     try {
         console.log("📥 Baixando planilha do Google Sheets...");
         const response = await fetch(SHEET_URL);
