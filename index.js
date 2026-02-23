@@ -44,8 +44,10 @@ app.post('/webhook/agenda', async (req, res) => {
     }
 
     try {
+        console.log("📥 Baixando planilha do Google Sheets...");
         const response = await fetch(SHEET_URL);
         if (!response.ok) throw new Error(`Erro ao baixar planilha: ${response.statusText}`);
+        console.log("✅ Planilha baixada com sucesso!");
 
         const rows = [];
         
@@ -53,6 +55,7 @@ app.post('/webhook/agenda', async (req, res) => {
         response.body.pipe(csv({ mapHeaders: ({ header }) => header.trim() }))
         .on('data', row => rows.push(row))
         .on('end', async () => {
+            console.log(`📊 Leitura concluída. ${rows.length} linhas encontradas.`);
             try {
                 // Monta uma única mensagem com todos os horários
                 let mensagemFinal = "📅 *Agenda de Hoje*\n\n";
@@ -71,6 +74,7 @@ app.post('/webhook/agenda', async (req, res) => {
                     }
                 }
 
+                console.log("📤 Enviando resposta para SURI...");
                 // Envia apenas uma mensagem consolidada
                 const suriResponse = await fetch(SURI_ENDPOINT, {
                     method: 'POST',
@@ -102,8 +106,24 @@ app.post('/webhook/agenda', async (req, res) => {
             }
         });
 
+        // Tratamento de erro do stream do CSV
+        response.body.on('error', (err) => {
+            console.error("❌ Erro na leitura do CSV:", err);
+            res.status(500).send("Erro na leitura do CSV");
+        });
+
     } catch (error) {
-        console.error(error);
+        console.error("❌ Erro fatal no processamento:", error);
+        // Tenta avisar o usuário que deu erro para ele não ficar esperando
+        try {
+            await fetch(SURI_ENDPOINT, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${SURI_TOKEN}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, message: { text: "⚠️ Desculpe, ocorreu um erro ao consultar a agenda. Tente novamente em alguns minutos." } })
+            });
+        } catch (e) {
+            console.error("Falha ao enviar mensagem de erro para o usuário:", e);
+        }
         res.status(500).send("Erro ao enviar agenda");
     }
 });
