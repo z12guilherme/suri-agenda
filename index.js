@@ -25,12 +25,14 @@ app.post('/webhook/agenda', async (req, res) => {
     // Tenta pegar o userId de várias formas possíveis (padrão SURI)
     const userId = req.body.userId || (req.body.contact && req.body.contact.identity);
     const messageText = req.body.message && req.body.message.text ? req.body.message.text : "";
+    // Captura um campo extra 'action' para chamadas diretas do fluxo
+    const action = req.body.action;
 
     if (!userId) return res.status(400).send("userId não encontrado no webhook");
 
-    // Filtro: Só responde se a mensagem contiver a palavra "agenda"
-    if (messageText && !messageText.toLowerCase().includes("agenda")) {
-        return res.send("Ignorado: mensagem não contém a palavra chave 'agenda'.");
+    // Filtro: Aceita se tiver a palavra "agenda" OU se vier com action="agenda" (do fluxo)
+    if ((!messageText || !messageText.toLowerCase().includes("agenda")) && action !== "agenda") {
+        return res.send("Ignorado: mensagem não contém a palavra chave 'agenda' e não é ação direta.");
     }
 
     try {
