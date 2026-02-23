@@ -42,26 +42,31 @@ app.post('/webhook/agenda', async (req, res) => {
         response.body.pipe(csv())
         .on('data', row => rows.push(row))
         .on('end', async () => {
+            // Monta uma única mensagem com todos os horários
+            let mensagemFinal = "📅 *Agenda de Hoje*\n\n";
+            
             for (const row of rows) {
                 const { DIA, HORARIO, MEDICO, VAGAS } = row;
-                const mensagem = `📅 Agenda de Hoje - ${DIA}\n${HORARIO} - Dr. ${MEDICO}\nVagas: ${VAGAS}`;
-
-                await fetch(SURI_ENDPOINT, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${SURI_TOKEN}`,
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        userId,
-                        message: {
-                            templateId: "",
-                            BodyParameters: [mensagem]
-                        }
-                    })
-                });
+                mensagemFinal += `🕒 ${HORARIO} - Dr(a). ${MEDICO} (${VAGAS} vagas)\n`;
             }
+
+            // Envia apenas uma mensagem consolidada
+            await fetch(SURI_ENDPOINT, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${SURI_TOKEN}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    userId,
+                    message: {
+                        templateId: "",
+                        BodyParameters: [mensagemFinal]
+                    }
+                })
+            });
+
             res.send("Agenda enviada com sucesso!");
         });
 
