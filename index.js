@@ -49,9 +49,9 @@ app.post('/webhook/agenda', async (req, res) => {
                 mensagemFinal += "🚫 Não há vagas disponíveis no momento.";
             } else {
                 for (const row of rows) {
-                    const { HORARIO, MEDICO, VAGAS } = row;
+                    const { DIA, HORARIO, MEDICO, VAGAS } = row;
                     if (HORARIO) { // Só adiciona se a linha tiver horário preenchido
-                        mensagemFinal += `🕒 ${HORARIO} - Dr(a). ${MEDICO || 'Plantão'} (${VAGAS || 0} vagas)\n`;
+                        mensagemFinal += `📅 ${DIA} às ${HORARIO} - Dr(a). ${MEDICO || 'Plantão'} (${VAGAS || 0} vagas)\n`;
                     }
                 }
             }
