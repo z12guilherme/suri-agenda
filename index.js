@@ -19,6 +19,9 @@ app.get('/webhook/agenda', (req, res) => {
 });
 
 app.post('/webhook/agenda', async (req, res) => {
+    // Log para ver o que a SURI está mandando (útil para debug no Render)
+    console.log("📩 Webhook recebido:", JSON.stringify(req.body, null, 2));
+
     const userId = req.body.userId;
     if (!userId) return res.status(400).send("userId não encontrado no webhook");
 
