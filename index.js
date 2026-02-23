@@ -5,6 +5,12 @@ import csv from 'csv-parser';
 const app = express();
 app.use(express.json());
 
+// Middleware de Log Geral: Mostra no console qualquer acesso ao servidor
+app.use((req, res, next) => {
+    console.log(`🌍 [${req.method}] ${req.path}`);
+    next();
+});
+
 const SURI_ENDPOINT = "https://cbm-wap-babysuri-cb89694138-dmi.azurewebsites.net/api/messages/send";
 const SURI_TOKEN = "5e43b5ec-7311-4324-8c34-820850928cc9";
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRS_ZyTgZTYfscu6bZk3Abf3gWoHHZjikXAa_z8e9i3fRO9KwJUI3MYMf4oFxiE9RasmxUFwo6XfMfe/pub?output=csv";
