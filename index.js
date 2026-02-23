@@ -49,21 +49,25 @@ app.post('/webhook/agenda', async (req, res) => {
 
         const rows = [];
         
-        response.body.pipe(csv())
+        // mapHeaders remove espaços acidentais (ex: " VAGAS " vira "VAGAS")
+        response.body.pipe(csv({ mapHeaders: ({ header }) => header.trim() }))
         .on('data', row => rows.push(row))
         .on('end', async () => {
             try {
                 // Monta uma única mensagem com todos os horários
                 let mensagemFinal = "📅 *Agenda de Hoje*\n\n";
                 
-                if (rows.length === 0) {
+                // Filtra apenas horários com vagas positivas
+                const horariosDisponiveis = rows.filter(row => row.HORARIO && parseInt(row.VAGAS, 10) > 0);
+
+                if (horariosDisponiveis.length === 0) {
                     mensagemFinal += "🚫 Não há vagas disponíveis no momento.";
                 } else {
-                    for (const row of rows) {
+                    for (const row of horariosDisponiveis) {
                         const { DIA, HORARIO, MEDICO, VAGAS } = row;
-                        if (HORARIO) { // Só adiciona se a linha tiver horário preenchido
-                            mensagemFinal += `📅 ${DIA} às ${HORARIO} - Dr(a). ${MEDICO || 'Plantão'} (${VAGAS || 0} vagas)\n`;
-                        }
+                        // Capitaliza o nome (ex: pedro -> Pedro)
+                        const medicoFormatado = MEDICO ? MEDICO.charAt(0).toUpperCase() + MEDICO.slice(1) : 'Plantão';
+                        mensagemFinal += `📅 ${DIA} às ${HORARIO} - Dr(a). ${medicoFormatado} (${VAGAS} vagas)\n`;
                     }
                 }
 
