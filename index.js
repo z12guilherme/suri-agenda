@@ -88,11 +88,14 @@ app.post('/webhook/agenda', async (req, res) => {
                     })
                 });
 
+                const responseText = await suriResponse.text();
                 if (!suriResponse.ok) {
-                    console.error("Erro SURI:", await suriResponse.text());
+                    console.error("❌ Erro SURI:", responseText);
+                } else {
+                    console.log("✅ Sucesso SURI:", responseText);
                 }
 
-                res.json({ success: true, message: "Agenda processada" });
+                res.json({ success: true, message: "Agenda processada", suriResponse: responseText });
             } catch (innerError) {
                 console.error("Erro no processamento interno:", innerError);
                 // Não enviamos res.status(500) aqui pois o res pode já ter sido enviado se houver timeout, 
