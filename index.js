@@ -22,8 +22,16 @@ app.post('/webhook/agenda', async (req, res) => {
     // Log para ver o que a SURI está mandando (útil para debug no Render)
     console.log("📩 Webhook recebido:", JSON.stringify(req.body, null, 2));
 
-    const userId = req.body.userId;
+    // Tenta pegar o userId de várias formas possíveis (padrão SURI)
+    const userId = req.body.userId || (req.body.contact && req.body.contact.identity);
+    const messageText = req.body.message && req.body.message.text ? req.body.message.text : "";
+
     if (!userId) return res.status(400).send("userId não encontrado no webhook");
+
+    // Filtro: Só responde se a mensagem contiver a palavra "agenda"
+    if (messageText && !messageText.toLowerCase().includes("agenda")) {
+        return res.send("Ignorado: mensagem não contém a palavra chave 'agenda'.");
+    }
 
     try {
         const response = await fetch(SHEET_URL);
