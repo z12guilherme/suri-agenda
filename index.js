@@ -107,8 +107,8 @@ app.post('/webhook/agenda', async (req, res) => {
                 res.json({ success: true, message: "Agenda processada", suriResponse: responseText });
             } catch (innerError) {
                 console.error("Erro no processamento interno:", innerError);
-                // Não enviamos res.status(500) aqui pois o res pode já ter sido enviado se houver timeout, 
-                // mas garante que o erro apareça no log do Render.
+                // Garante que a requisição não fique travada se der erro aqui dentro
+                if (!res.headersSent) res.status(500).json({ error: "Erro interno ao processar agenda", details: innerError.message });
             }
         });
 
