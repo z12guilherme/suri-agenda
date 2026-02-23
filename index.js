@@ -28,13 +28,23 @@ app.post('/webhook/agenda', async (req, res) => {
     // Log para ver o que a SURI está mandando (útil para debug no Render)
     console.log("📩 Webhook recebido:", JSON.stringify(req.body, null, 2));
 
-    // Tenta pegar o userId de várias formas possíveis (padrão SURI)
-    const userId = req.body.userId || (req.body.contact && req.body.contact.identity);
-    const messageText = req.body.message && req.body.message.text ? req.body.message.text : "";
-    // Captura um campo extra 'action' para chamadas diretas do fluxo
-    const action = req.body.action;
-    // Verifica se existe a tag 'pedir_agenda' no contato (caso use a estratégia de Tag)
-    const tags = req.body.contact && req.body.contact.tags ? req.body.contact.tags : [];
+    const body = req.body;
+
+    // 1. Tenta pegar dados do formato Customizado (Integração do Fluxo)
+    let userId = body.userId;
+    let action = body.action;
+    let messageText = body.message && body.message.text ? body.message.text : "";
+    let tags = body.contact && body.contact.tags ? body.contact.tags : [];
+
+    // 2. Se não achou, tenta pegar do formato Webhook Global (SURI padrão - payload)
+    if (!userId && body.payload && body.payload.user) {
+        userId = body.payload.user.Id;
+        tags = body.payload.user.Tags || [];
+    }
+    if (!messageText && body.payload && body.payload.Message) {
+        messageText = body.payload.Message.text;
+    }
+
     const hasTag = Array.isArray(tags) && tags.some(t => (typeof t === 'string' ? t : t.name).includes('pedir_agenda'));
 
     if (!userId) return res.status(400).send("userId não encontrado no webhook");
