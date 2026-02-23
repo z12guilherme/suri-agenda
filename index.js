@@ -10,6 +10,10 @@ const SURI_ENDPOINT = "https://cbm-wap-babysuri-cb89694138-dmi.azurewebsites.net
 const SURI_TOKEN = "5e43b5ec-7311-4324-8c34-820850928cc9";
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRS_ZyTgZTYfscu6bZk3Abf3gWoHHZjikXAa_z8e9i3fRO9KwJUI3MYMf4oFxiE9RasmxUFwo6XfMfe/pub?output=csv";
 
+app.get('/', (req, res) => {
+    res.send("Servidor Suri-Agenda está online! 🚀");
+});
+
 app.post('/webhook/agenda', async (req, res) => {
     const userId = req.body.userId;
     if (!userId) return res.status(400).send("userId não encontrado no webhook");
